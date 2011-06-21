@@ -133,19 +133,27 @@ instance Pretty Storage where
     ppr (Ttypedef _)   = text "typedef"
 
 instance Pretty TypeQual where
-    ppr (Tconst _)     = text "const"
-    ppr (Tvolatile _)  = text "volatile"
-    ppr (Tinline _)    = text "inline"
+    ppr (Tconst _)       = text "const"
+    ppr (Tvolatile _)    = text "volatile"
+    ppr (Tinline _)      = text "inline"
 
-    ppr (Trestrict _)  = text "__restrict"
+    ppr (Trestrict _)    = text "__restrict"
 
-    ppr (Tdevice _)    = text "__device__"
-    ppr (Tglobal _)    = text "__global__"
-    ppr (Thost _)      = text "__host__"
-    ppr (Tconstant _)  = text "__constant__"
-    ppr (Tshared _)    = text "__shared__"
-    ppr (Tnoinline _)  = text "__noinline__"
+    ppr (Tdevice _)      = text "__device__"
+    ppr (Tglobal _)      = text "__global__"
+    ppr (Thost _)        = text "__host__"
+    ppr (Tconstant _)    = text "__constant__"
+    ppr (Tshared _)      = text "__shared__"
+    ppr (Tnoinline _)    = text "__noinline__"
 
+    ppr (TCLPrivate _)   = text "private"
+    ppr (TCLLocal _)     = text "local"
+    ppr (TCLGlobal _)    = text "global"
+    ppr (TCLConstant _)  = text "constant"
+    ppr (TCLReadOnly _)  = text "read_only"
+    ppr (TCLWriteOnly _) = text "write_only"
+    ppr (TCLKernel _)    = text "kernel"
+    
 instance Pretty Sign where
     ppr (Tsigned _)    = text "signed"
     ppr (Tunsigned _)  = text "unsigned"

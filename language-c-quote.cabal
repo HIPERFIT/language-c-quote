@@ -9,8 +9,8 @@ maintainer:    mainland@eecs.harvard.edu
 stability:     alpha
 homepage:      http://www.eecs.harvard.edu/~mainland/
 category:      Language
-synopsis:      C/CUDA quasiquoting library.
-description:   C/CUDA quasiquoting library.
+synopsis:      C/CUDA/OpenCL quasiquoting library.
+description:   C/CUDA/OpenCL quasiquoting library.
 
 build-type: Custom
 
@@ -52,6 +52,7 @@ library
     Language.C.Quote.Base
     Language.C.Quote.C
     Language.C.Quote.CUDA
+    Language.C.Quote.OpenCL
     Language.C.Quote.GCC
     Language.C.Smart
     Language.C.Syntax

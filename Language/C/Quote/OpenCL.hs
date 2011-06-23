@@ -67,8 +67,9 @@ typenames :: [String]
 typenames =
     concatMap typeN 
         ["char", "uchar", "short", "ushort", "int", "uint", 
-        "long" , "ulong", "float", "double", "bool", "half", "quad"]
-    ++ ["half", "quad", "image2d_t", "image3d_t", "sampler_t", "event_t"]
+        "long" , "ulong", "float", "double", "bool", "half", "quad"] ++ 
+    ["uchar", "ushort", "uint", "ulong", 
+    "half", "quad", "image2d_t", "image3d_t", "sampler_t", "event_t"]
 
 typeN typename = [typename ++ show n | n <- [2, 3, 4, 8, 16]]
 

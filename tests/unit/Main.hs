@@ -6,6 +6,9 @@ import Test.HUnit
 
 import Language.C.Quote.C
 import qualified Language.C.Syntax
+import qualified Data.Loc
+import qualified Data.Symbol
+
 
 main = runTestTT tests
 

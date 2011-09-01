@@ -1,4 +1,4 @@
--- Copyright (c) 2006-2010
+-- Copyright (c) 2006-2011
 --         The President and Fellows of Harvard College.
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -28,16 +28,13 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  Language.C.Quote.CUDA
--- Copyright   :  (c) Harvard University 2006-2010
+-- Copyright   :  (c) Harvard University 2006-2011
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 --
 --------------------------------------------------------------------------------
 
 module Language.C.Quote.CUDA (
-    module Data.Loc,
-    module Data.Ratio,
-    module Data.Symbol,
     ToExp(..),
     cexp,
     cedecl,
@@ -52,13 +49,9 @@ module Language.C.Quote.CUDA (
     cfun
   ) where
 
-import Data.Loc
-import Data.Ratio ((%))
-import Data.Symbol
-
 import qualified Language.C.Parser as P
 import qualified Language.C.Syntax as C
-import Language.C.Quote.Base
+import Language.C.Quote.Base (ToExp(..), quasiquote)
 
 exts :: [C.Extensions]
 exts = [C.CUDA]

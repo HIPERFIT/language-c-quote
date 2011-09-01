@@ -360,18 +360,19 @@ instance Located Storage where
     getLoc (Ttypedef loc)   = getLoc loc
 
 instance Located TypeQual where
-    getLoc (Tconst loc)          = getLoc loc
-    getLoc (Tvolatile loc)       = getLoc loc
-    getLoc (Tinline loc)         = getLoc loc
+    getLoc (Tconst loc)         = getLoc loc
+    getLoc (Tvolatile loc)      = getLoc loc
+    getLoc (Tinline loc)        = getLoc loc
 
-    getLoc (Trestrict loc)       = getLoc loc
+    getLoc (Trestrict loc)      = getLoc loc
 
-    getLoc (Tdevice loc)         = getLoc loc
-    getLoc (Tglobal loc)         = getLoc loc
-    getLoc (Thost loc)           = getLoc loc
-    getLoc (Tconstant loc)       = getLoc loc
-    getLoc (Tshared loc)         = getLoc loc
-    getLoc (Tnoinline loc)       = getLoc loc
+
+    getLoc (Tdevice loc)        = getLoc loc
+    getLoc (Tglobal loc)        = getLoc loc
+    getLoc (Thost loc)          = getLoc loc
+    getLoc (Tconstant loc)      = getLoc loc
+    getLoc (Tshared loc)        = getLoc loc
+    getLoc (Tnoinline loc)      = getLoc loc
 
     getLoc (TCLPrivate loc)     = getLoc loc
     getLoc (TCLLocal loc)       = getLoc loc
@@ -380,7 +381,7 @@ instance Located TypeQual where
     getLoc (TCLReadOnly loc)    = getLoc loc
     getLoc (TCLWriteOnly loc)   = getLoc loc
     getLoc (TCLKernel loc)      = getLoc loc
-    
+
 instance Located Sign where
     getLoc (Tsigned loc)    = getLoc loc
     getLoc (Tunsigned loc)  = getLoc loc

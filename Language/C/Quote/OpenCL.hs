@@ -1,4 +1,4 @@
--- Copyright (c) 2006-2010
+-- Copyright (c) 2006-2011
 --         The President and Fellows of Harvard College.
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -27,17 +27,14 @@
 
 --------------------------------------------------------------------------------
 -- |
--- Module      :  Language.C.Quote.CUDA
--- Copyright   :  (c) Harvard University 2006-2010
+-- Module      :  Language.C.Quote.OpenCL
+-- Copyright   :  (c) Harvard University 2006-2011
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 --
 --------------------------------------------------------------------------------
 
 module Language.C.Quote.OpenCL (
-    module Data.Loc,
-    module Data.Ratio,
-    module Data.Symbol,
     ToExp(..),
     cexp,
     cedecl,
@@ -52,23 +49,20 @@ module Language.C.Quote.OpenCL (
     cfun
   ) where
 
-import Data.Loc
-import Data.Ratio ((%))
-import Data.Symbol
-
 import qualified Language.C.Parser as P
 import qualified Language.C.Syntax as C
-import Language.C.Quote.Base
+import Language.C.Quote.Base (ToExp(..), quasiquote)
 
 exts :: [C.Extensions]
 exts = [C.OpenCL]
 
+
 typenames :: [String]
 typenames =
-    concatMap typeN 
-        ["char", "uchar", "short", "ushort", "int", "uint", 
-        "long" , "ulong", "float", "double", "bool", "half", "quad"] ++ 
-    ["uchar", "ushort", "uint", "ulong", 
+    concatMap typeN
+    ["char", "uchar", "short", "ushort", "int", "uint",
+     "long" , "ulong", "float", "double", "bool", "half", "quad"] ++
+    ["uchar", "ushort", "uint", "ulong",
     "half", "quad", "image2d_t", "image3d_t", "sampler_t", "event_t"]
 
 typeN typename = [typename ++ show n | n <- [2, 3, 4, 8, 16]]

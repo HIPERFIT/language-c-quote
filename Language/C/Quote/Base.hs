@@ -1,4 +1,4 @@
--- Copyright (c) 2006-2010
+-- Copyright (c) 2006-2011
 --         The President and Fellows of Harvard College.
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  Language.C.Quote
--- Copyright   :  (c) Harvard University 2006-2010
+-- Copyright   :  (c) Harvard University 2006-2011
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 --
@@ -55,36 +55,37 @@ import Data.Symbol
 import Language.Haskell.Meta (parseExp, parsePat)
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote (QuasiQuoter(..))
+import Language.Haskell.TH.Syntax
 
 import qualified Language.C.Parser as P
 import qualified Language.C.Syntax as C
 
 class ToExp a where
-    toExp :: a -> C.Exp
+    toExp :: a -> SrcLoc -> C.Exp
 
 instance ToExp C.Exp where
-    toExp = id
+    toExp e _ = e
 
 instance ToExp Int where
-    toExp n = C.Const (C.IntConst (show n) C.Signed (fromIntegral n) noSrcLoc) noSrcLoc
+    toExp n loc = C.Const (C.IntConst (show n) C.Signed (fromIntegral n) loc) loc
 
 instance ToExp Integer where
-    toExp n = C.Const (C.IntConst (show n) C.Signed n noSrcLoc) noSrcLoc
+    toExp n loc = C.Const (C.IntConst (show n) C.Signed n loc) loc
 
 instance ToExp Rational where
-    toExp n = C.Const (C.DoubleConst (show n) n noSrcLoc) noSrcLoc
+    toExp n loc = C.Const (C.DoubleConst (show n) n loc) loc
 
 instance ToExp Float where
-    toExp n = C.Const (C.DoubleConst (show n) (toRational n) noSrcLoc) noSrcLoc
+    toExp n loc = C.Const (C.DoubleConst (show n) (toRational n) loc) loc
 
 instance ToExp Double where
-    toExp n = C.Const (C.DoubleConst (show n) (toRational n) noSrcLoc) noSrcLoc
+    toExp n loc = C.Const (C.DoubleConst (show n) (toRational n) loc) loc
 
 instance ToExp Char where
-    toExp c = C.Const (C.CharConst (show c) c noSrcLoc) noSrcLoc
+    toExp c loc = C.Const (C.CharConst (show c) c loc) loc
 
 instance ToExp String where
-    toExp s = C.Const (C.StringConst [show s] s noSrcLoc) noSrcLoc
+    toExp s loc = C.Const (C.StringConst [show s] s loc) loc
 
 antiVarE :: String -> ExpQ
 antiVarE = either fail return . parseExp
@@ -127,8 +128,8 @@ qqInitGroupE _                 = Nothing
 
 qqInitGroupListE :: [C.InitGroup] -> Maybe (Q Exp)
 qqInitGroupListE [] = Just [|[]|]
-qqInitGroupListE (C.AntiDecls v _ : inis) =
-    Just [|$(antiVarE v) ++ $(dataToExpQ qqExp inis)|]
+qqInitGroupListE (C.AntiDecls v _ : inits) =
+    Just [|$(antiVarE v) ++ $(dataToExpQ qqExp inits)|]
 qqInitGroupListE (ini : inis) =
     Just [|$(dataToExpQ qqExp ini) : $(dataToExpQ qqExp inis)|]
 
@@ -234,13 +235,14 @@ qqConstE = go
     floatConst e = [|show (fromRational $(e) :: Double)|]
 
 qqExpE :: C.Exp -> Maybe (Q Exp)
-qqExpE (C.AntiExp v _) = Just [|toExp $(antiVarE v) :: C.Exp|]
-qqExpE _               = Nothing
+qqExpE (C.AntiExp v loc) = Just [|toExp $(antiVarE v) $(qqLocE loc) :: C.Exp|]
+qqExpE _                 = Nothing
 
 qqExpListE :: [C.Exp] -> Maybe (Q Exp)
 qqExpListE [] = Just [|[]|]
-qqExpListE (C.AntiArgs v _ : exps) =
-    Just [|map toExp $(antiVarE v) ++ $(dataToExpQ qqExp exps)|]
+qqExpListE (C.AntiArgs v loc : exps) =
+    Just [|map (uncurry toExp) ($(antiVarE v) `zip` repeat $(qqLocE loc)) ++
+           $(dataToExpQ qqExp exps)|]
 qqExpListE (exp : exps) =
     Just [|$(dataToExpQ qqExp exp) : $(dataToExpQ qqExp exps)|]
 
@@ -504,64 +506,71 @@ quasiquote exts typenames p =
                 , quotePat = parse exts typenames p >=> dataToPatQ qqPat
                 }
 
-dataToQa :: forall a k q. Data a
-         => (String -> k)
-         -> (Lit -> Q q)
-         -> (k -> [Q q] -> Q q)
-         -> (forall a . Data a => a -> Maybe (Q q))
-         -> a
-         -> Q q
+dataToQa  ::  forall a k q. Data a
+          =>  (Name -> k)
+          ->  (Lit -> Q q)
+          ->  (k -> [Q q] -> Q q)
+          ->  (forall b . Data b => b -> Maybe (Q q))
+          ->  a
+          ->  Q q
 dataToQa mkCon mkLit appCon antiQ t =
     case antiQ t of
-      Just x  -> x
       Nothing ->
           case constrRep constr of
-            AlgConstr _      -> appCon con conArgs
-            IntConstr n      -> mkLit $ integerL n
-            FloatConstr n    -> mkLit $ rationalL (toRational n)
-#if MIN_VERSION_template_haskell(2,4,0)
-            CharConstr c     -> mkLit $ charL c
-#else /* !MIN_VERSION_template_haskell(2,4,0) */
-            StringConstr [c] -> mkLit $ charL c
-            StringConstr s   -> mkLit $ stringL s
-#endif /* !MIN_VERSION_template_haskell(2,4,0) */
-  where
-    constr :: Constr
-    constr = toConstr t
+            AlgConstr _  ->
+                appCon con conArgs
+            IntConstr n ->
+                mkLit $ integerL n
+            FloatConstr n ->
+                mkLit $ rationalL (toRational n)
+            CharConstr c ->
+                mkLit $ charL c
+        where
+          constr :: Constr
+          constr = toConstr t
 
-    con :: k
-    con = mkCon (constrName constr)
-      where
-        constrName :: Constr -> String
-        constrName k =
-            case showConstr k of
-              "(:)"  -> ":"
-              name | name `elem` unqualifiedConstructors -> name
-                   | otherwise -> "Language.C.Syntax." ++ name
+          con :: k
+          con = mkCon (mkName' mod occ)
+            where
+              mod :: String
+              mod = (tyconModule . dataTypeName . dataTypeOf) t
 
-    conArgs :: [Q q]
-    conArgs = gmapQ (dataToQa mkCon mkLit appCon antiQ) t
+              occ :: String
+              occ = showConstr constr
 
-    unqualifiedConstructors :: [String]
-    unqualifiedConstructors = ["[]", "(,)", "(,,)", ":%",
-                               "True", "False",
-                               "Just", "Nothing",
-                               "Left", "Right",
-                               "Symbol",
-                               "Loc", "NoLoc", "Pos", "SrcLoc"]
+              mkName' :: String -> String -> Name
+              mkName' "Prelude" "(:)" = Name (mkOccName ":") NameS
+              mkName' "Prelude" "[]"  = Name (mkOccName "[]") NameS
+              mkName' "Prelude" "()"  = Name (mkOccName "()") NameS
 
-dataToExpQ :: Data a
-           => (forall a . Data a => a -> Maybe (Q Exp))
-           -> a
-           -> Q Exp
-dataToExpQ = dataToQa mkCon litE (foldl appE)
-  where
-    mkCon :: String -> Q Exp
-    mkCon ":%" = (varE . mkName) "%"
-    mkCon s    = (conE . mkName) s
+              mkName' "Prelude" s@('(' : ',' : rest) = go rest
+                where
+                  go :: String -> Name
+                  go (',' : rest) = go rest
+                  go ")"          = Name (mkOccName s) NameS
+                  go _            = Name (mkOccName occ) (NameQ (mkModName mod))
 
-dataToPatQ :: Data a
-           => (forall a . Data a => a -> Maybe (Q Pat))
-           -> a
-           -> Q Pat
-dataToPatQ = dataToQa mkName litP conP
+              mkName' "GHC.Real" ":%" = mkNameG_d "base" "GHC.Real" ":%"
+
+              mkName' mod occ = Name (mkOccName occ) (NameQ (mkModName mod))
+
+          conArgs :: [Q q]
+          conArgs = gmapQ (dataToQa mkCon mkLit appCon antiQ) t
+
+      Just y -> y
+
+-- | 'dataToExpQ' converts a value to a 'Q Exp' representation of the same
+-- value. It takes a function to handle type-specific cases.
+dataToExpQ  ::  Data a
+            =>  (forall b . Data b => b -> Maybe (Q Exp))
+            ->  a
+            ->  Q Exp
+dataToExpQ = dataToQa conE litE (foldl appE)
+
+-- | 'dataToPatQ' converts a value to a 'Q Pat' representation of the same
+-- value. It takes a function to handle type-specific cases.
+dataToPatQ  ::  Data a
+            =>  (forall b . Data b => b -> Maybe (Q Pat))
+            ->  a
+            ->  Q Pat
+dataToPatQ = dataToQa id litP conP

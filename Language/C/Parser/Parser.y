@@ -1,7 +1,7 @@
 {
 {-# OPTIONS -w #-}
 
--- Copyright (c) 2006-2010
+-- Copyright (c) 2006-2011
 --         The President and Fellows of Harvard College.
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  Language.C.Parser.Parser
--- Copyright   :  (c) Harvard University 2006-2010
+-- Copyright   :  (c) Harvard University 2006-2011
 -- License     :  BSD-style
 -- Maintainer  :  mainland@eecs.harvard.edu
 --
@@ -965,20 +965,20 @@ type_qualifier :
   | '__noinline__' { TSnoinline (locOf $1) }
 
   {- Extension: OpenCL -}
-  | 'private'   { TSCLPrivate (locOf $1) }
-  | '__private'   { TSCLPrivate (locOf $1) }
-  | 'local'   { TSCLLocal (locOf $1) }
-  | '__local'   { TSCLLocal (locOf $1) }
-  | 'global'   { TSCLGlobal (locOf $1) }
-  | '__global'   { TSCLGlobal (locOf $1) }
-  | 'constant'   { TSCLConstant (locOf $1) }
+  | 'private'      { TSCLPrivate (locOf $1) }
+  | '__private'    { TSCLPrivate (locOf $1) }
+  | 'local'        { TSCLLocal (locOf $1) }
+  | '__local'      { TSCLLocal (locOf $1) }
+  | 'global'       { TSCLGlobal (locOf $1) }
+  | '__global'     { TSCLGlobal (locOf $1) }
+  | 'constant'     { TSCLConstant (locOf $1) }
   | '__constant'   { TSCLConstant (locOf $1) }
-  | 'read_only'   { TSCLReadOnly (locOf $1) }
-  | '__read_only'   { TSCLReadOnly (locOf $1) }
+  | 'read_only'    { TSCLReadOnly (locOf $1) }
+  | '__read_only'  { TSCLReadOnly (locOf $1) }
   | 'write_only'   { TSCLWriteOnly (locOf $1) }
-  | '__write_only'   { TSCLWriteOnly (locOf $1) }
-  | 'kernel'   { TSCLKernel (locOf $1) }
-  | '__kernel'   { TSCLKernel (locOf $1) }
+  | '__write_only' { TSCLWriteOnly (locOf $1) }
+  | 'kernel'       { TSCLKernel (locOf $1) }
+  | '__kernel'     { TSCLKernel (locOf $1) }
 
 -- Consider the following C program:
 --
@@ -1742,9 +1742,8 @@ getANTI_PARAM       (L _ (T.Tanti_param v))       = v
 getANTI_PARAMS      (L _ (T.Tanti_params v))      = v
 
 lexer :: (L T.Token -> P a) -> P a
-lexer cont = do
-    tok <- lexToken
-    cont tok
+lexer cont =
+    lexToken >>= cont
 
 locate :: Loc -> (SrcLoc -> a) -> L a
 locate loc f = L loc (f (SrcLoc loc))
